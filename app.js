@@ -167,11 +167,11 @@ function renderSummary() {
 
   el.innerHTML = `
     <div class="summary-card">
-      <div class="label">Суммарная длительность (по этапам, кол. H)</div>
+      <div class="label">Суммарная длительность</div>
       <div class="value">${fmt(s.totalByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Оптимизированная суммарная длительность (по этапам, кол. M)</div>
+      <div class="label">Оптимизированная суммарная длительность</div>
       <div class="value">${fmt(s.totalOptByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
