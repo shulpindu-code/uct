@@ -84,14 +84,17 @@ const state = {
 const fmt = (n) => (n == null ? "—" : n.toFixed(1).replace(/\.0$/, ""));
 
 // === Расчёт длительности этапа ===
+// Если в этапе есть параллельные шаги — длительность этапа = сумма ТОЛЬКО последовательных.
+// Если все шаги последовательные — длительность этапа = сумма всех шагов.
 function stageDuration(steps) {
   const valid = steps.filter(s => s.duration != null);
   if (!valid.length) return 0;
+  const hasParallel = valid.some(s => s.parallel);
+  if (!hasParallel) {
+    return valid.reduce((a, s) => a + s.duration, 0);
+  }
   const sequential = valid.filter(s => !s.parallel);
-  const parallel   = valid.filter(s =>  s.parallel);
-  const sumSeq = sequential.reduce((a, s) => a + s.duration, 0);
-  const maxPar = parallel.length ? Math.max(...parallel.map(s => s.duration)) : 0;
-  return sumSeq + maxPar;
+  return sequential.reduce((a, s) => a + s.duration, 0);
 }
 
 function computeStageTotals() {
@@ -256,13 +259,11 @@ function positionTooltip(target) {
   let top = rect.bottom + gap + window.scrollY;
   let left = rect.left + window.scrollX;
 
-  // Если не помещается справа — прижимаем к правому краю
   if (left + tooltipRect.width > window.innerWidth - 12) {
     left = window.innerWidth - tooltipRect.width - 12 + window.scrollX;
   }
   if (left < 12) left = 12 + window.scrollX;
 
-  // Если не помещается снизу — показываем сверху
   if (rect.bottom + gap + tooltipRect.height > window.innerHeight) {
     top = rect.top - tooltipRect.height - gap + window.scrollY;
     el.classList.add("above");
@@ -283,8 +284,6 @@ function attachTooltip(rowEl, data) {
   rowEl.addEventListener("mouseleave", hideTooltip);
   rowEl.addEventListener("focus", () => showTooltip(rowEl, data));
   rowEl.addEventListener("blur", hideTooltip);
-
-  // Для мобильных — тап по строке
   rowEl.addEventListener("touchstart", (e) => {
     if (e.touches.length === 1) showTooltip(rowEl, data);
   }, { passive: true });
@@ -324,10 +323,9 @@ function renderGantt() {
       const barClass = hasParallel ? "parallel" : (hasOptional ? "опциональный" : "");
       const pct = (dur / maxScale) * 100;
       const seq = steps.filter(s => !s.parallel).reduce((a, s) => a + s.duration, 0);
-      const par = steps.filter(s =>  s.parallel).reduce((a, s) => Math.max(a, s.duration), 0);
       const breakdown = hasParallel
-        ? `посл. ${fmt(seq)} + пар. ${fmt(par)}`
-        : `сумма ${fmt(seq)}`;
+        ? `только последовательные шаги (параллельные учтены внутри) — ${fmt(seq)} нед.`
+        : `сумма всех шагов — ${fmt(seq)} нед.`;
 
       return `
         <div class="stage-block">
@@ -406,9 +404,9 @@ function renderGantt() {
       body.appendChild(row);
     }
 
-    const seq = steps.filter(s => !s.parallel).reduce((a, s) => a + s.duration, 0);
-    const par = steps.filter(s =>  s.parallel).reduce((a, s) => Math.max(a, s.duration), 0);
     const hasParallel = steps.some(s => s.parallel);
+    const seqSum = steps.filter(s => !s.parallel).reduce((a, s) => a + s.duration, 0);
+    const parSum = steps.filter(s =>  s.parallel).reduce((a, s) => a + s.duration, 0);
     const footer = document.createElement("div");
     footer.className = "step-row";
     footer.style.gridTemplateColumns = "1fr";
@@ -417,8 +415,8 @@ function renderGantt() {
       <div class="note" style="border-left-color:#ff6b35; font-size:0.95rem">
         <b>Длительность этапа:</b> ${fmt(dur)} нед. —
         ${hasParallel
-          ? `последовательные ${fmt(seq)} + макс. из параллельных ${fmt(par)}`
-          : `сумма последовательных шагов`}
+          ? `только последовательные шаги (${fmt(seqSum)} нед.); параллельные шаги (${fmt(parSum)} нед.) учтены внутри этого времени`
+          : `сумма всех шагов (${fmt(seqSum)} нед.)`}
       </div>
     `;
     body.appendChild(footer);
