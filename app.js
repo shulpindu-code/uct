@@ -85,9 +85,7 @@ const state = {
 
 const fmt = (n) => (n == null ? "—" : n.toFixed(1).replace(/\.0$/, ""));
 
-// Возвращает длительность шага для указанного режима.
-// mode = "base"        → колонка H
-// mode = "optimized"   → колонка M; если пусто → колонка H
+// Длительность шага для режима "base" (H) или "optimized" (M → fallback H)
 function stepDuration(step, mode) {
   if (mode === "optimized") {
     if (step.optDuration != null) return step.optDuration;
@@ -96,12 +94,19 @@ function stepDuration(step, mode) {
   return step.duration;
 }
 
+// Обязательный ли шаг (строго "Обязательный")
+function isMandatory(step) {
+  return step.importance === "Обязательный";
+}
+
 // === Расчёт длительности этапа для заданного режима ===
-// Если в этапе есть параллельные шаги — длительность этапа = сумма ТОЛЬКО последовательных.
-// Если все шаги параллельные — берём максимум из параллельных.
-// Если все шаги последовательные — сумма всех шагов.
+// Учитываются ТОЛЬКО обязательные шаги. Параллельность учитывается среди них:
+//  - есть параллельные + последовательные → сумма последовательных обязательных
+//  - все обязательные параллельные → максимум из них
+//  - все обязательные последовательные → сумма всех обязательных
 function stageDuration(steps, mode = "base") {
   const valid = steps
+    .filter(isMandatory)
     .map(s => ({ ...s, _d: stepDuration(s, mode) }))
     .filter(s => s._d != null);
 
@@ -111,17 +116,15 @@ function stageDuration(steps, mode = "base") {
   const sequential = valid.filter(s => !s.parallel);
 
   if (parallel.length && !sequential.length) {
-    // все шаги параллельные
     return Math.max(...parallel.map(s => s._d));
   }
-  // есть параллельные + последовательные ИЛИ только последовательные
-  // в обоих случаях сумма последовательных (параллельные «растворяются» внутри)
   return sequential.reduce((a, s) => a + s._d, 0);
 }
 
 function computeStageTotals(mode = "base") {
   const map = new Map();
   for (const r of RAW_DATA) {
+    if (!isMandatory(r)) continue;
     if (stepDuration(r, mode) == null) continue;
     if (!map.has(r.stage)) map.set(r.stage, []);
     map.get(r.stage).push(r);
@@ -142,18 +145,16 @@ function computeSummary() {
   const totalBase = baseTotals.reduce((a, s) => a + s.duration, 0);
   const totalOpt  = optTotals.reduce((a, s) => a + s.duration, 0);
 
-  const valid = RAW_DATA.filter(r => r.duration != null);
-  const obligatory = valid.filter(r => r.importance === "Обязательный")
-                           .reduce((s, r) => s + r.duration, 0);
-  const parallelSum = valid.filter(r => r.parallel)
-                           .reduce((s, r) => s + r.duration, 0);
+  const mandatory = RAW_DATA.filter(r => isMandatory(r) && r.duration != null);
+  const mandatoryCount = mandatory.length;
+  const parallelMandatory = mandatory.filter(r => r.parallel).length;
 
   return {
     totalByStages: totalBase,
     totalOptByStages: totalOpt,
-    obligatory,
-    parallelSum,
-    count: valid.length,
+    mandatoryCount,
+    parallelMandatory,
+    count: RAW_DATA.filter(r => r.duration != null).length,
     stages: baseTotals.length,
   };
 }
@@ -178,11 +179,11 @@ function renderSummary() {
       <div class="value">${fmt(saving)} <small>нед. (−${savingPct.toFixed(0)}%)</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Обязательные шаги (H)</div>
-      <div class="value">${fmt(s.obligatory)} <small>нед.</small></div>
+      <div class="label">Обязательных шагов (из них параллельных)</div>
+      <div class="value">${s.mandatoryCount} <small>(${s.parallelMandatory} паралл.)</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Этапов / шагов</div>
+      <div class="label">Этапов / шагов всего</div>
       <div class="value">${s.stages} / ${s.count}</div>
     </div>
   `;
@@ -208,16 +209,16 @@ function sortedStages(stages) {
   const arr = [...stages];
   if (state.sortMode === "duration") {
     arr.sort((a, b) => {
-      const da = stageDuration(RAW_DATA.filter(r => r.stage === a && r.duration != null), "base");
-      const db = stageDuration(RAW_DATA.filter(r => r.stage === b && r.duration != null), "base");
+      const da = stageDuration(RAW_DATA.filter(r => r.stage === a), "base");
+      const db = stageDuration(RAW_DATA.filter(r => r.stage === b), "base");
       return db - da;
     });
     return arr;
   }
   if (state.sortMode === "importance") {
     const rank = (s) => {
-      const steps = RAW_DATA.filter(r => r.stage === s && r.duration != null);
-      return steps.every(r => r.importance === "Обязательный") ? 0 : 1;
+      const steps = RAW_DATA.filter(r => r.stage === s && isMandatory(r) && r.duration != null);
+      return steps.length ? 0 : 1;
     };
     arr.sort((a, b) => rank(a) - rank(b));
     return arr;
@@ -228,9 +229,9 @@ function sortedStages(stages) {
 
 function sortSteps(steps) {
   const arr = [...steps];
-  if (state.sortMode === "duration") arr.sort((a, b) => b.duration - a.duration);
+  if (state.sortMode === "duration") arr.sort((a, b) => (b.duration ?? 0) - (a.duration ?? 0));
   if (state.sortMode === "importance") {
-    const rank = (r) => (r.importance === "Обязательный" ? 0 : 1);
+    const rank = (r) => (isMandatory(r) ? 0 : 1);
     arr.sort((a, b) => rank(a) - rank(b));
   }
   return arr;
@@ -267,6 +268,7 @@ function showTooltip(target, data) {
     <span>Оптимизированная (M): <b>${data.optDuration != null ? fmt(data.optDuration) : "— (берётся из H)"} нед.</b></span>
     <span>Важность: ${escapeHtml(data.importance || "—")}</span>
     <span>Параллельно: ${data.parallel ? "да" : "нет"}</span>
+    <span>Учитывается в расчёте: <b>${isMandatory(data) ? "да" : "нет (только обязательные)"}</b></span>
   </div>`);
 
   if (data.speedup && data.speedup.trim()) {
@@ -348,7 +350,7 @@ function renderGantt() {
   if (state.viewMode === "stage") {
     maxScale = Math.max(...stages.map(s => stageDuration(map.get(s), "base")), 0.1);
   } else {
-    maxScale = Math.max(...rows.map(r => r.duration), 0.1);
+    maxScale = Math.max(...rows.map(r => r.duration ?? 0), 0.1);
   }
 
   if (state.viewMode === "stage") {
@@ -356,23 +358,17 @@ function renderGantt() {
       const steps = map.get(stage);
       const durBase = stageDuration(steps, "base");
       const durOpt  = stageDuration(steps, "optimized");
-      const hasParallel = steps.some(s => s.parallel);
-      const hasOptional = steps.some(s => s.importance === "Опциональный");
-      const barClass = hasParallel ? "parallel" : (hasOptional ? "опциональный" : "");
+      const mandatory = steps.filter(isMandatory);
+      const hasParallelMandatory = mandatory.some(s => s.parallel);
+      const barClass = hasParallelMandatory ? "parallel" : "";
       const pct = (durBase / maxScale) * 100;
       const pctOpt = (durOpt / maxScale) * 100;
-
-      const seqBase = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
-      const seqOpt  = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
-      const breakdown = hasParallel
-        ? `только последовательные шаги (параллельные учтены внутри)`
-        : `сумма всех шагов`;
       const hasOptDiff = Math.abs(durBase - durOpt) > 0.001;
 
       return `
         <div class="stage-block">
           <div class="stage-header" style="cursor:default">
-            <span class="stage-title">${stage} <small>(${steps.length} шагов)</small></span>
+            <span class="stage-title">${stage} <small>(${mandatory.length} обяз. из ${steps.length})</small></span>
             <span class="stage-total">${fmt(durBase)} <small>нед.</small></span>
           </div>
           <div class="stage-body">
@@ -395,7 +391,8 @@ function renderGantt() {
             </div>` : ""}
             <div class="step-row" style="grid-template-columns:1fr; border-bottom:none; padding-top:0">
               <div class="note" style="font-size:0.9rem; border-left-color:#ff6b35">
-                ${breakdown}: <b>H = ${fmt(seqBase)} нед.</b>${hasOptDiff ? `, <b>M = ${fmt(seqOpt)} нед.</b>` : ""}
+                Учитываются только обязательные шаги${hasParallelMandatory ? " (параллельные учтены внутри)" : ""}.
+                <b>H = ${fmt(durBase)} нед.</b>${hasOptDiff ? `, <b>M = ${fmt(durOpt)} нед.</b>` : ""}
               </div>
             </div>
           </div>
@@ -410,6 +407,7 @@ function renderGantt() {
     const durBase = stageDuration(steps, "base");
     const durOpt  = stageDuration(steps, "optimized");
     const collapsed = state.collapsed.has(stage);
+    const mandatorySteps = steps.filter(isMandatory);
 
     const block = document.createElement("div");
     block.className = "stage-block" + (collapsed ? " collapsed" : "");
@@ -417,7 +415,7 @@ function renderGantt() {
     const header = document.createElement("div");
     header.className = "stage-header";
     header.innerHTML = `
-      <span class="stage-title">${collapsed ? "▶" : "▼"} ${stage} <small>(${steps.length} шагов)</small></span>
+      <span class="stage-title">${collapsed ? "▶" : "▼"} ${stage} <small>(${mandatorySteps.length} обяз. из ${steps.length})</small></span>
       <span class="stage-total">${fmt(durBase)} <small>нед.</small></span>
     `;
     header.addEventListener("click", () => {
@@ -435,15 +433,17 @@ function renderGantt() {
       row.className = "step-row";
       row.tabIndex = 0;
       if (r.speedup && r.speedup.trim()) row.classList.add("has-speedup");
+      if (!isMandatory(r)) row.classList.add("not-mandatory");
 
       const badgeClass = r.importance === "Опциональный" ? "опциональный" : "обязательный";
       const barClass = r.parallel ? "parallel" : (r.importance === "Опциональный" ? "опциональный" : "");
-      const pct = (r.duration / maxScale) * 100;
+      const pct = ((r.duration ?? 0) / maxScale) * 100;
 
       row.innerHTML = `
         <div class="step-name">
           <span>${r.name}</span>
           ${r.importance === "Опциональный" ? `<span class="badge ${badgeClass}">опц.</span>` : ""}
+          ${r.importance === "—" ? `<span class="badge" style="background:#b8a888;color:#2b1d0e">—</span>` : ""}
           ${r.parallel ? `<span class="badge" style="background:#2a9d8f;color:#f4e4c1">∥ паралл.</span>` : ""}
           ${r.speedup && r.speedup.trim() ? `<span class="speedup-icon" title="Есть предложение по ускорению">⚡</span>` : ""}
         </div>
@@ -458,26 +458,28 @@ function renderGantt() {
       body.appendChild(row);
     }
 
-    const hasParallel = steps.some(s => s.parallel);
-    const seqBase = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
-    const parBase = steps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
-    const seqOpt  = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
-    const parOpt  = steps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
+    const hasParallelMandatory = mandatorySteps.some(s => s.parallel);
+    const seqBase = mandatorySteps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
+    const parBase = mandatorySteps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
+    const seqOpt  = mandatorySteps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
+    const parOpt  = mandatorySteps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
     const footer = document.createElement("div");
     footer.className = "step-row";
     footer.style.gridTemplateColumns = "1fr";
     footer.style.background = "#e8d5a8";
     footer.innerHTML = `
       <div class="note" style="border-left-color:#ff6b35; font-size:0.95rem">
+        <b>Учитываются только обязательные шаги (${mandatorySteps.length} из ${steps.length}).</b>
+        <br>
         <b>Длительность этапа (H):</b> ${fmt(durBase)} нед. —
-        ${hasParallel
-          ? `только последовательные шаги (${fmt(seqBase)} нед.); параллельные (${fmt(parBase)} нед.) учтены внутри`
-          : `сумма всех шагов (${fmt(seqBase)} нед.)`}
+        ${hasParallelMandatory
+          ? `только последовательные обязательные (${fmt(seqBase)} нед.); параллельные обязательные (${fmt(parBase)} нед.) учтены внутри`
+          : `сумма обязательных (${fmt(seqBase)} нед.)`}
         <br>
         <b>Оптимизированная (M):</b> ${fmt(durOpt)} нед. —
-        ${hasParallel
-          ? `только последовательные шаги (${fmt(seqOpt)} нед.); параллельные (${fmt(parOpt)} нед.) учтены внутри`
-          : `сумма всех шагов (${fmt(seqOpt)} нед.)`}
+        ${hasParallelMandatory
+          ? `только последовательные обязательные (${fmt(seqOpt)} нед.); параллельные обязательные (${fmt(parOpt)} нед.) учтены внутри`
+          : `сумма обязательных (${fmt(seqOpt)} нед.)`}
       </div>
     `;
     body.appendChild(footer);
