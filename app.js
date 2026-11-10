@@ -331,7 +331,83 @@ function attachTooltip(rowEl, data) {
 window.addEventListener("scroll", () => { if (tooltipEl) hideTooltip(); }, { passive: true });
 window.addEventListener("resize", () => { if (tooltipEl) hideTooltip(); });
 
-// === Рендер диаграммы ===
+// === Рендер диаграммы Ганта (временная шкала) перед фильтрами ===
+function renderGanttChart() {
+  const el = document.getElementById("ganttChart");
+  if (!el) return;
+
+  // Обзорная диаграмма — все этапы в исходном порядке, независимо от фильтров.
+  const map = new Map();
+  for (const r of RAW_DATA) {
+    if (r.duration == null) continue;
+    if (!map.has(r.stage)) map.set(r.stage, []);
+    map.get(r.stage).push(r);
+  }
+  const stages = STAGE_ORDER.filter(s => map.has(s));
+
+  const rows = stages.map(stage => {
+    const steps = map.get(stage);
+    const durBase = stageDuration(steps, "base");
+    const durOpt  = stageDuration(steps, "optimized");
+    const mandatory = steps.filter(isMandatory);
+    const hasParallelMandatory = mandatory.some(s => s.parallel);
+    const hasOnlyOptional = mandatory.length === 0;
+    return { stage, steps, durBase, durOpt, hasParallelMandatory, hasOnlyOptional };
+  });
+
+  const total = rows.reduce((a, r) => a + r.durBase, 0) || 1;
+
+  let cumulative = 0;
+  const bars = rows.map(r => {
+    const leftPct = (cumulative / total) * 100;
+    const widthPct = (r.durBase / total) * 100;
+    cumulative += r.durBase;
+    return { ...r, leftPct, widthPct };
+  });
+
+  const tickCount = 10;
+  const ticks = [];
+  for (let i = 0; i <= tickCount; i++) {
+    ticks.push((total / tickCount * i).toFixed(1).replace(/\.0$/, ""));
+  }
+
+  const totalOpt = rows.reduce((a, r) => a + r.durOpt, 0);
+
+  el.innerHTML = `
+    <div class="gantt-chart-title">Диаграмма Ганта — обзор</div>
+    <div class="gantt-chart-inner">
+      <div class="gantt-scale">
+        <div class="gantt-scale-label">Этап / недели</div>
+        <div class="gantt-scale-ticks">
+          ${ticks.map(t => `<span>${t}</span>`).join("")}
+        </div>
+      </div>
+      ${bars.map(b => `
+        <div class="gantt-chart-row">
+          <div class="gantt-chart-row-label">
+            <span>${b.stage}</span>
+            <small>${fmt(b.durBase)} нед.${Math.abs(b.durBase - b.durOpt) > 0.001 ? ` → ${fmt(b.durOpt)} (опт.)` : ""}</small>
+          </div>
+          <div class="gantt-chart-row-track">
+            <div
+              class="gantt-chart-bar ${b.hasParallelMandatory ? "parallel" : ""} ${b.hasOnlyOptional ? "optional" : ""}"
+              style="left:${b.leftPct}%; width:${Math.max(b.widthPct, 0.5)}%;"
+              title="${b.stage}: ${fmt(b.durBase)} нед."
+            >
+              ${b.widthPct > 6 ? `<span class="gantt-chart-bar-label">${fmt(b.durBase)}</span>` : ""}
+            </div>
+          </div>
+        </div>
+      `).join("")}
+      <div class="gantt-chart-total">
+        <span>Итого по всем этапам</span>
+        <span class="gantt-chart-total-value">${fmt(total)} нед.${Math.abs(total - totalOpt) > 0.001 ? ` (опт. ${fmt(totalOpt)})` : ""}</span>
+      </div>
+    </div>
+  `;
+}
+
+// === Рендер списка этапов с полосами ===
 function renderGantt() {
   const el = document.getElementById("gantt");
   el.innerHTML = "";
@@ -492,6 +568,7 @@ function renderGantt() {
 // === Инициализация ===
 function init() {
   renderSummary();
+  renderGanttChart();
   renderGantt();
 
   document.getElementById("filterOptional").addEventListener("change", (e) => {
@@ -510,83 +587,5 @@ function init() {
     renderGantt();
   });
 }
-// === Рендер диаграммы Ганта (временная шкала) перед фильтрами ===
-function renderGanttChart() {
-  const el = document.getElementById("ganttChart");
-  if (!el) return;
 
-  // Берём все этапы в исходном порядке (независимо от фильтров и сортировки —
-  // это «обзорная» диаграмма, показывающая структуру ЗНИ целиком).
-  const map = new Map();
-  for (const r of RAW_DATA) {
-    if (r.duration == null) continue;
-    if (!map.has(r.stage)) map.set(r.stage, []);
-    map.get(r.stage).push(r);
-  }
-  const stages = STAGE_ORDER.filter(s => map.has(s));
-
-  // Считаем длительности этапов
-  const rows = stages.map(stage => {
-    const steps = map.get(stage);
-    const durBase = stageDuration(steps, "base");
-    const durOpt  = stageDuration(steps, "optimized");
-    const mandatory = steps.filter(isMandatory);
-    const hasParallelMandatory = mandatory.some(s => s.parallel);
-    const hasOnlyOptional = mandatory.length === 0;
-    return { stage, steps, durBase, durOpt, hasParallelMandatory, hasOnlyOptional };
-  });
-
-  const total = rows.reduce((a, r) => a + r.durBase, 0) || 1;
-
-  // Накопительное смещение по времени
-  let cumulative = 0;
-  const bars = rows.map(r => {
-    const leftPct = (cumulative / total) * 100;
-    const widthPct = (r.durBase / total) * 100;
-    cumulative += r.durBase;
-    return { ...r, leftPct, widthPct };
-  });
-
-  // Шкала: 10 делений от 0 до total
-  const tickCount = 10;
-  const ticks = [];
-  for (let i = 0; i <= tickCount; i++) {
-    ticks.push((total / tickCount * i).toFixed(1).replace(/\.0$/, ""));
-  }
-
-  const totalOpt = rows.reduce((a, r) => a + r.durOpt, 0);
-
-  el.innerHTML = `
-    <div class="gantt-chart-title">Диаграмма Ганта — обзор</div>
-    <div class="gantt-chart-inner">
-      <div class="gantt-scale">
-        <div class="gantt-scale-label">Этап / недели</div>
-        <div class="gantt-scale-ticks">
-          ${ticks.map(t => `<span>${t}</span>`).join("")}
-        </div>
-      </div>
-      ${bars.map(b => `
-        <div class="gantt-chart-row">
-          <div class="gantt-chart-row-label">
-            <span>${b.stage}</span>
-            <small>${fmt(b.durBase)} нед.${Math.abs(b.durBase - b.durOpt) > 0.001 ? ` → ${fmt(b.durOpt)} (опт.)` : ""}</small>
-          </div>
-          <div class="gantt-chart-row-track">
-            <div
-              class="gantt-chart-bar ${b.hasParallelMandatory ? "parallel" : ""} ${b.hasOnlyOptional ? "optional" : ""}"
-              style="left:${b.leftPct}%; width:${Math.max(b.widthPct, 0.5)}%;"
-              title="${b.stage}: ${fmt(b.durBase)} нед."
-            >
-              ${b.widthPct > 6 ? `<span class="gantt-chart-bar-label">${fmt(b.durBase)}</span>` : ""}
-            </div>
-          </div>
-        </div>
-      `).join("")}
-      <div class="gantt-chart-total">
-        <span>Итого по всем этапам</span>
-        <span class="gantt-chart-total-value">${fmt(total)} нед.${Math.abs(total - totalOpt) > 0.001 ? ` (опт. ${fmt(totalOpt)})` : ""}</span>
-      </div>
-    </div>
-  `;
-}
 document.addEventListener("DOMContentLoaded", init);
