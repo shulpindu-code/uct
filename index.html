@@ -1,12 +1,67 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЗНИ ПБиОТ — длительность этапов</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Привет, GitHub Pages!</h1>
-    <p>Мой первый сайт успешно запущен.</p>
+<header class="header">
+  <h1>Запрос на изменение (ЗНИ) ПБиОТ</h1>
+  <p class="subtitle">Визуализация длительности этапов и шагов</p>
+</header>
+
+<main class="container">
+
+  <!-- Сводная информация -->
+  <section class="summary" id="summary"></section>
+
+  <!-- Фильтры -->
+  <section class="filters">
+    <div class="filter-group">
+      <label><input type="checkbox" id="filterOptional" checked> Показывать опциональные шаги</label>
+    </div>
+    <div class="filter-group">
+      <label for="viewMode">Вид:</label>
+      <select id="viewMode">
+        <option value="step">По шагам</option>
+        <option value="stage">По этапам (сумма)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="sortMode">Сортировка:</label>
+      <select id="sortMode">
+        <option value="stage">По порядку этапов</option>
+        <option value="duration">По длительности ↓</option>
+        <option value="importance">По важности</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Диаграмма Ганта -->
+  <section class="gantt" id="gantt"></section>
+
+  <!-- Пояснение -->
+  <section class="legend">
+    <h3>Обозначения</h3>
+    <div class="legend-items">
+      <span class="legend-item"><span class="swatch обязательный"></span>Обязательный шаг</span>
+      <span class="legend-item"><span class="swatch опциональный"></span>Опциональный шаг</span>
+      <span class="legend-item"><span class="swatch parallel"></span>Можно параллелить</span>
+    </div>
+    <p class="note">
+      Данные взяты из вкладки «Общая схема (ЗНИ ПБиОТ)», колонка H «Длительность (недели)».
+      Итоговая длительность без учёта параллельных шагов — сумма всех длительностей.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>Источник: «Ускорение разработки (3).xlsx» → «Общая схема (ЗНИ ПБиОТ)»</p>
+</footer>
+
+<script src="app.js"></script>
 </body>
 </html>
