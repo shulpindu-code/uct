@@ -1,64 +1,66 @@
 // Данные из вкладки «Общая схема (ЗНИ ПБиОТ)»
-// stage — этап, name — шаг, duration — колонка H (недели),
+// stage — этап, name — шаг,
+// duration — колонка H «Длительность (недели)»,
+// optDuration — колонка M «Оцениваемая оптимизированная длительность» (может быть null),
 // importance — важность, parallel — колонка J ("Да" → true),
 // speedup — колонка K «Как можно ускорить/автоматизировать»
 const RAW_DATA = [
   // Подготовительный
-  { stage: "Подготовительный", name: "Построить/Скорректировать Vision продукта", duration: 3.0, importance: "Опциональный", parallel: true,
+  { stage: "Подготовительный", name: "Построить/Скорректировать Vision продукта", duration: 3.0, optDuration: 0.0, importance: "Опциональный", parallel: true,
     speedup: "Можно данный шаг не делать в случае маленьких/понятных разработок." },
-  { stage: "Подготовительный", name: "Сформировать драфт бэклога и дорожной карты. Оценка", duration: 1.0, importance: "—", parallel: false,
+  { stage: "Подготовительный", name: "Сформировать драфт бэклога и дорожной карты. Оценка", duration: 1.0, optDuration: 0.1, importance: "—", parallel: false,
     speedup: "Автоматизировать построение дорожной карты. Подготовить шаблон дорожной карты с типовыми шагами, их длительностью и артефактами — команде останется оценить только написание кода/выполнение настроек." },
-  { stage: "Подготовительный", name: "Выделение ресурсов", duration: 4.0, importance: "Обязательный", parallel: false,
+  { stage: "Подготовительный", name: "Выделение ресурсов", duration: 4.0, optDuration: 1.0, importance: "Обязательный", parallel: false,
     speedup: "Автоматизировать построение дорожной карты. Подготовить шаблон дорожной карты с типовыми шагами, их длительностью и артефактами." },
 
   // Проработка аналитики
-  { stage: "Проработка аналитики", name: "Сформировать бизнес требования", duration: 3.0, importance: "Обязательный", parallel: false,
+  { stage: "Проработка аналитики", name: "Сформировать бизнес требования", duration: 3.0, optDuration: 1.5, importance: "Обязательный", parallel: false,
     speedup: "Использовать внутренний шаблон БТ. Проработка по показателям ПБиОТ заняла 2 очные встречи — около 1,5 недель. БТ делаем на основании готовых прототипов." },
 
   // Проработка реализации
-  { stage: "Проработка реализации", name: "Согласовать инициативу с архитектурой", duration: 5.0, importance: "Обязательный", parallel: true,
+  { stage: "Проработка реализации", name: "Согласовать инициативу с архитектурой", duration: 5.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: "Проанализировать реализованные за последний год решения, выделить типовые запросы (например, мобильный сервис ПБиОТ), проработать совместно с архитектурой деревья принятия решений. Это позволит выходить на арх. оценку быстрее." },
-  { stage: "Проработка реализации", name: "Определить критичность данных. Согласовать лист ИКИА", duration: 3.0, importance: "Обязательный", parallel: true,
+  { stage: "Проработка реализации", name: "Определить критичность данных. Согласовать лист ИКИА", duration: 3.0, optDuration: 0.5, importance: "Обязательный", parallel: true,
     speedup: "Проработать для типовых решений совместно с ИБ деревья принятия решений. Класс критичности данных и требования будут формироваться автоматически по итогам заполнения дерева." },
-  { stage: "Проработка реализации", name: "Получить требования со стороны ИБ", duration: 2.0, importance: "Обязательный", parallel: true,
+  { stage: "Проработка реализации", name: "Получить требования со стороны ИБ", duration: 2.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: "Использовать типовой опросный лист ИКИА и шаблон запроса в Отдел процессов информационной безопасности." },
-  { stage: "Проработка реализации", name: "Проработка выделения инфраструктуры", duration: 12.0, importance: "Опциональный", parallel: false,
+  { stage: "Проработка реализации", name: "Проработка выделения инфраструктуры", duration: 12.0, optDuration: null, importance: "Опциональный", parallel: false,
     speedup: "За счёт подготовки дев-среды и автоматизации пайплайнов." },
 
   // Реализация
-  { stage: "Реализация", name: "Создать ЗНИ на команду СЛ исполнителя", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Реализация", name: "Создать ЗНИ на команду СЛ исполнителя", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: "Нет списка артефактов и их формата, которые в явном виде отражали бы потребность команды СЛ, на которую создаётся ЗНИ." },
-  { stage: "Реализация", name: "Разработка макетов, UI/UX тестирование, согласование", duration: 2.5, importance: "Опциональный", parallel: false,
+  { stage: "Реализация", name: "Разработка макетов, UI/UX тестирование, согласование", duration: 2.5, optDuration: 1.0, importance: "Опциональный", parallel: false,
     speedup: "Автоматически формировать дизайн и кликабельный прототип от БТ." },
-  { stage: "Реализация", name: "Разработка/настройка функционала, доработка интеграций", duration: 8.0, importance: "Обязательный", parallel: false,
+  { stage: "Реализация", name: "Разработка/настройка функционала, доработка интеграций", duration: 8.0, optDuration: 4.0, importance: "Обязательный", parallel: false,
     speedup: "Генерировать фронт и бэк на основании макетов и БТ." },
-  { stage: "Реализация", name: "Внутреннее тестирование", duration: null, importance: "Обязательный", parallel: false,
+  { stage: "Реализация", name: "Внутреннее тестирование", duration: null, optDuration: null, importance: "Обязательный", parallel: false,
     speedup: null },
 
   // Документация
-  { stage: "Документация", name: "Разработка ПР по ИБ", duration: 6.0, importance: "Обязательный", parallel: true,
+  { stage: "Документация", name: "Разработка ПР по ИБ", duration: 6.0, optDuration: 2.0, importance: "Обязательный", parallel: true,
     speedup: "Большая часть требований по ИБ типовая. Можно предзаполнять ПР автоматически." },
-  { stage: "Документация", name: "Разработка ПР по интеграции", duration: 6.0, importance: "Опциональный", parallel: true,
+  { stage: "Документация", name: "Разработка ПР по интеграции", duration: 6.0, optDuration: 6.0, importance: "Опциональный", parallel: true,
     speedup: null },
-  { stage: "Документация", name: "Спецификация на разработку", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Документация", name: "Спецификация на разработку", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: "Типовой документ. Можно генерировать на основании проекта — возможно, сорскрафт сможет сам писать спецификацию на основании реализуемого решения." },
-  { stage: "Документация", name: "Разработка/обновление эксплуатационной документации", duration: 3.0, importance: "Обязательный", parallel: true,
+  { stage: "Документация", name: "Разработка/обновление эксплуатационной документации", duration: 3.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: "Типовой документ. Можно генерировать на основании проекта — возможно, сорскрафт сможет сам писать спецификацию на основании реализуемого решения." },
 
   // Тестирование, исправление замечаний
-  { stage: "Тестирование, исправление замечаний", name: "Внутреннее тестирование", duration: 2.0, importance: "Обязательный", parallel: false,
+  { stage: "Тестирование, исправление замечаний", name: "Внутреннее тестирование", duration: 2.0, optDuration: 2.0, importance: "Обязательный", parallel: false,
     speedup: null },
-  { stage: "Тестирование, исправление замечаний", name: "ПСИ ИБ (подготовка)", duration: 3.0, importance: "Обязательный", parallel: false,
+  { stage: "Тестирование, исправление замечаний", name: "ПСИ ИБ (подготовка)", duration: 3.0, optDuration: null, importance: "Обязательный", parallel: false,
     speedup: null },
-  { stage: "Тестирование, исправление замечаний", name: "ПСИ ИБ (проведение и согласование)", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Тестирование, исправление замечаний", name: "ПСИ ИБ (проведение и согласование)", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: null },
-  { stage: "Тестирование, исправление замечаний", name: "ПСИ с бизнесом", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Тестирование, исправление замечаний", name: "ПСИ с бизнесом", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: null },
 
   // Внедрение
-  { stage: "Внедрение", name: "Перенос в продуктив", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Внедрение", name: "Перенос в продуктив", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: null },
-  { stage: "Внедрение", name: "Закрытие", duration: 1.0, importance: "Обязательный", parallel: true,
+  { stage: "Внедрение", name: "Закрытие", duration: 1.0, optDuration: 1.0, importance: "Обязательный", parallel: true,
     speedup: null },
 ];
 
@@ -83,30 +85,50 @@ const state = {
 
 const fmt = (n) => (n == null ? "—" : n.toFixed(1).replace(/\.0$/, ""));
 
-// === Расчёт длительности этапа ===
-// Если в этапе есть параллельные шаги — длительность этапа = сумма ТОЛЬКО последовательных.
-// Если все шаги последовательные — длительность этапа = сумма всех шагов.
-function stageDuration(steps) {
-  const valid = steps.filter(s => s.duration != null);
-  if (!valid.length) return 0;
-  const hasParallel = valid.some(s => s.parallel);
-  if (!hasParallel) {
-    return valid.reduce((a, s) => a + s.duration, 0);
+// Возвращает длительность шага для указанного режима.
+// mode = "base"        → колонка H
+// mode = "optimized"   → колонка M; если пусто → колонка H
+function stepDuration(step, mode) {
+  if (mode === "optimized") {
+    if (step.optDuration != null) return step.optDuration;
+    return step.duration;
   }
-  const sequential = valid.filter(s => !s.parallel);
-  return sequential.reduce((a, s) => a + s.duration, 0);
+  return step.duration;
 }
 
-function computeStageTotals() {
+// === Расчёт длительности этапа для заданного режима ===
+// Если в этапе есть параллельные шаги — длительность этапа = сумма ТОЛЬКО последовательных.
+// Если все шаги параллельные — берём максимум из параллельных.
+// Если все шаги последовательные — сумма всех шагов.
+function stageDuration(steps, mode = "base") {
+  const valid = steps
+    .map(s => ({ ...s, _d: stepDuration(s, mode) }))
+    .filter(s => s._d != null);
+
+  if (!valid.length) return 0;
+
+  const parallel   = valid.filter(s =>  s.parallel);
+  const sequential = valid.filter(s => !s.parallel);
+
+  if (parallel.length && !sequential.length) {
+    // все шаги параллельные
+    return Math.max(...parallel.map(s => s._d));
+  }
+  // есть параллельные + последовательные ИЛИ только последовательные
+  // в обоих случаях сумма последовательных (параллельные «растворяются» внутри)
+  return sequential.reduce((a, s) => a + s._d, 0);
+}
+
+function computeStageTotals(mode = "base") {
   const map = new Map();
   for (const r of RAW_DATA) {
-    if (r.duration == null) continue;
+    if (stepDuration(r, mode) == null) continue;
     if (!map.has(r.stage)) map.set(r.stage, []);
     map.get(r.stage).push(r);
   }
   const totals = [];
   for (const [stage, steps] of map.entries()) {
-    totals.push({ stage, steps: steps.length, duration: stageDuration(steps) });
+    totals.push({ stage, steps: steps.length, duration: stageDuration(steps, mode) });
   }
   totals.sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
   return totals;
@@ -114,36 +136,50 @@ function computeStageTotals() {
 
 // === Сводка ===
 function computeSummary() {
-  const stageTotals = computeStageTotals();
-  const totalByStages = stageTotals.reduce((a, s) => a + s.duration, 0);
+  const baseTotals = computeStageTotals("base");
+  const optTotals  = computeStageTotals("optimized");
+
+  const totalBase = baseTotals.reduce((a, s) => a + s.duration, 0);
+  const totalOpt  = optTotals.reduce((a, s) => a + s.duration, 0);
+
   const valid = RAW_DATA.filter(r => r.duration != null);
-  const totalSimple  = valid.reduce((s, r) => s + r.duration, 0);
-  const obligatory   = valid.filter(r => r.importance === "Обязательный")
-                             .reduce((s, r) => s + r.duration, 0);
-  const parallelSum  = valid.filter(r => r.parallel)
-                             .reduce((s, r) => s + r.duration, 0);
-  return { totalByStages, totalSimple, obligatory, parallelSum, count: valid.length, stages: stageTotals.length };
+  const obligatory = valid.filter(r => r.importance === "Обязательный")
+                           .reduce((s, r) => s + r.duration, 0);
+  const parallelSum = valid.filter(r => r.parallel)
+                           .reduce((s, r) => s + r.duration, 0);
+
+  return {
+    totalByStages: totalBase,
+    totalOptByStages: totalOpt,
+    obligatory,
+    parallelSum,
+    count: valid.length,
+    stages: baseTotals.length,
+  };
 }
 
 function renderSummary() {
   const s = computeSummary();
   const el = document.getElementById("summary");
+  const saving = s.totalByStages - s.totalOptByStages;
+  const savingPct = s.totalByStages > 0 ? (saving / s.totalByStages) * 100 : 0;
+
   el.innerHTML = `
     <div class="summary-card">
-      <div class="label">Суммарная длительность (по этапам)</div>
+      <div class="label">Суммарная длительность (по этапам, кол. H)</div>
       <div class="value">${fmt(s.totalByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Простая сумма всех шагов</div>
-      <div class="value">${fmt(s.totalSimple)} <small>нед.</small></div>
+      <div class="label">Оптимизированная суммарная длительность (по этапам, кол. M)</div>
+      <div class="value">${fmt(s.totalOptByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Обязательные шаги</div>
+      <div class="label">Экономия при оптимизации</div>
+      <div class="value">${fmt(saving)} <small>нед. (−${savingPct.toFixed(0)}%)</small></div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Обязательные шаги (H)</div>
       <div class="value">${fmt(s.obligatory)} <small>нед.</small></div>
-    </div>
-    <div class="summary-card">
-      <div class="label">Шагов с параллельностью</div>
-      <div class="value">${fmt(s.parallelSum)} <small>нед. (в сумме)</small></div>
     </div>
     <div class="summary-card">
       <div class="label">Этапов / шагов</div>
@@ -172,8 +208,8 @@ function sortedStages(stages) {
   const arr = [...stages];
   if (state.sortMode === "duration") {
     arr.sort((a, b) => {
-      const da = stageDuration(RAW_DATA.filter(r => r.stage === a && r.duration != null));
-      const db = stageDuration(RAW_DATA.filter(r => r.stage === b && r.duration != null));
+      const da = stageDuration(RAW_DATA.filter(r => r.stage === a && r.duration != null), "base");
+      const db = stageDuration(RAW_DATA.filter(r => r.stage === b && r.duration != null), "base");
       return db - da;
     });
     return arr;
@@ -227,7 +263,8 @@ function showTooltip(target, data) {
   parts.push(`<div class="tooltip-title">${escapeHtml(data.name)}</div>`);
   parts.push(`<div class="tooltip-meta">
     <span>Этап: ${escapeHtml(data.stage)}</span>
-    <span>Длительность: <b>${fmt(data.duration)} нед.</b></span>
+    <span>Длительность (H): <b>${fmt(data.duration)} нед.</b></span>
+    <span>Оптимизированная (M): <b>${data.optDuration != null ? fmt(data.optDuration) : "— (берётся из H)"} нед.</b></span>
     <span>Важность: ${escapeHtml(data.importance || "—")}</span>
     <span>Параллельно: ${data.parallel ? "да" : "нет"}</span>
   </div>`);
@@ -309,7 +346,7 @@ function renderGantt() {
 
   let maxScale;
   if (state.viewMode === "stage") {
-    maxScale = Math.max(...stages.map(s => stageDuration(map.get(s))), 0.1);
+    maxScale = Math.max(...stages.map(s => stageDuration(map.get(s), "base")), 0.1);
   } else {
     maxScale = Math.max(...rows.map(r => r.duration), 0.1);
   }
@@ -317,33 +354,49 @@ function renderGantt() {
   if (state.viewMode === "stage") {
     el.innerHTML = stages.map(stage => {
       const steps = map.get(stage);
-      const dur = stageDuration(steps);
+      const durBase = stageDuration(steps, "base");
+      const durOpt  = stageDuration(steps, "optimized");
       const hasParallel = steps.some(s => s.parallel);
       const hasOptional = steps.some(s => s.importance === "Опциональный");
       const barClass = hasParallel ? "parallel" : (hasOptional ? "опциональный" : "");
-      const pct = (dur / maxScale) * 100;
-      const seq = steps.filter(s => !s.parallel).reduce((a, s) => a + s.duration, 0);
+      const pct = (durBase / maxScale) * 100;
+      const pctOpt = (durOpt / maxScale) * 100;
+
+      const seqBase = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
+      const seqOpt  = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
       const breakdown = hasParallel
-        ? `только последовательные шаги (параллельные учтены внутри) — ${fmt(seq)} нед.`
-        : `сумма всех шагов — ${fmt(seq)} нед.`;
+        ? `только последовательные шаги (параллельные учтены внутри)`
+        : `сумма всех шагов`;
+      const hasOptDiff = Math.abs(durBase - durOpt) > 0.001;
 
       return `
         <div class="stage-block">
           <div class="stage-header" style="cursor:default">
             <span class="stage-title">${stage} <small>(${steps.length} шагов)</small></span>
-            <span class="stage-total">${fmt(dur)} <small>нед.</small></span>
+            <span class="stage-total">${fmt(durBase)} <small>нед.</small></span>
           </div>
           <div class="stage-body">
             <div class="step-row" style="grid-template-columns:1fr 90px">
               <div class="bar-container" style="height:28px">
                 <div class="bar ${barClass}" style="width:${pct}%">
-                  ${pct > 12 ? `<span class="bar-label">${fmt(dur)}</span>` : ""}
+                  ${pct > 12 ? `<span class="bar-label">${fmt(durBase)}</span>` : ""}
                 </div>
               </div>
-              <div class="step-duration">${fmt(dur)} <small>нед.</small></div>
+              <div class="step-duration">${fmt(durBase)} <small>нед.</small></div>
             </div>
+            ${hasOptDiff ? `
+            <div class="step-row" style="grid-template-columns:1fr 90px">
+              <div class="bar-container" style="height:28px">
+                <div class="bar" style="width:${pctOpt}%; background:var(--teal)">
+                  ${pctOpt > 12 ? `<span class="bar-label">${fmt(durOpt)}</span>` : ""}
+                </div>
+              </div>
+              <div class="step-duration">${fmt(durOpt)} <small>нед. (опт.)</small></div>
+            </div>` : ""}
             <div class="step-row" style="grid-template-columns:1fr; border-bottom:none; padding-top:0">
-              <div class="note" style="font-size:0.9rem; border-left-color:#ff6b35">${breakdown}</div>
+              <div class="note" style="font-size:0.9rem; border-left-color:#ff6b35">
+                ${breakdown}: <b>H = ${fmt(seqBase)} нед.</b>${hasOptDiff ? `, <b>M = ${fmt(seqOpt)} нед.</b>` : ""}
+              </div>
             </div>
           </div>
         </div>
@@ -354,7 +407,8 @@ function renderGantt() {
 
   for (const stage of stages) {
     const steps = sortSteps(map.get(stage));
-    const dur = stageDuration(steps);
+    const durBase = stageDuration(steps, "base");
+    const durOpt  = stageDuration(steps, "optimized");
     const collapsed = state.collapsed.has(stage);
 
     const block = document.createElement("div");
@@ -364,7 +418,7 @@ function renderGantt() {
     header.className = "stage-header";
     header.innerHTML = `
       <span class="stage-title">${collapsed ? "▶" : "▼"} ${stage} <small>(${steps.length} шагов)</small></span>
-      <span class="stage-total">${fmt(dur)} <small>нед.</small></span>
+      <span class="stage-total">${fmt(durBase)} <small>нед.</small></span>
     `;
     header.addEventListener("click", () => {
       if (state.collapsed.has(stage)) state.collapsed.delete(stage);
@@ -405,18 +459,25 @@ function renderGantt() {
     }
 
     const hasParallel = steps.some(s => s.parallel);
-    const seqSum = steps.filter(s => !s.parallel).reduce((a, s) => a + s.duration, 0);
-    const parSum = steps.filter(s =>  s.parallel).reduce((a, s) => a + s.duration, 0);
+    const seqBase = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
+    const parBase = steps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
+    const seqOpt  = steps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
+    const parOpt  = steps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
     const footer = document.createElement("div");
     footer.className = "step-row";
     footer.style.gridTemplateColumns = "1fr";
     footer.style.background = "#e8d5a8";
     footer.innerHTML = `
       <div class="note" style="border-left-color:#ff6b35; font-size:0.95rem">
-        <b>Длительность этапа:</b> ${fmt(dur)} нед. —
+        <b>Длительность этапа (H):</b> ${fmt(durBase)} нед. —
         ${hasParallel
-          ? `только последовательные шаги (${fmt(seqSum)} нед.); параллельные шаги (${fmt(parSum)} нед.) учтены внутри этого времени`
-          : `сумма всех шагов (${fmt(seqSum)} нед.)`}
+          ? `только последовательные шаги (${fmt(seqBase)} нед.); параллельные (${fmt(parBase)} нед.) учтены внутри`
+          : `сумма всех шагов (${fmt(seqBase)} нед.)`}
+        <br>
+        <b>Оптимизированная (M):</b> ${fmt(durOpt)} нед. —
+        ${hasParallel
+          ? `только последовательные шаги (${fmt(seqOpt)} нед.); параллельные (${fmt(parOpt)} нед.) учтены внутри`
+          : `сумма всех шагов (${fmt(seqOpt)} нед.)`}
       </div>
     `;
     body.appendChild(footer);
