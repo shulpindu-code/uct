@@ -171,7 +171,7 @@ function renderSummary() {
       <div class="value">${fmt(s.totalByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Оптимизированная суммарная длительность</div>
+      <div class="label">Суммарная длительность(опт.)</div>
       <div class="value">${fmt(s.totalOptByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
