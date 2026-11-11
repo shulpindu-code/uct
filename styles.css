@@ -1,13 +1,13 @@
 /* ============================================================
-   RETRO / 80s / VHS / ARCADE
-   + TOOLTIP
-   + ДИАГРАММЫ ГАНТА (обзор и объём трудозатрат) — в карусели
+   RETRO / 80s / ARCADE
+   + Глубокий неоновый фон
+   + TOOLTIP и ДИАГРАММЫ ГАНТА
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap');
 
 :root {
-  --bg:        #1a1410;
+  --bg:        #0d0c1d;   /* Глубокий тёмно-синий (космос) */
   --paper:     #f4e4c1;
   --paper-2:   #e8d5a8;
   --cream:     #fdf6e3;
@@ -16,9 +16,9 @@
   --amber:     #ffb000;
   --teal:      #2a9d8f;
   --red:       #d62828;
-  --purple:    #6a4c93;
+  --purple:    #a855f7;   /* Неоновый фиолетовый */
   --green:     #588157;
-  --scan:      rgba(0, 0, 0, 0.06);
+  --scan:      rgba(0, 0, 0, 0.08);
   --border:    3px solid var(--ink);
   --shadow:    6px 6px 0 var(--ink);
   --shadow-sm: 4px 4px 0 var(--ink);
@@ -30,15 +30,20 @@ html { scroll-behavior: smooth; }
 body {
   font-family: "IBM Plex Mono", "Courier New", monospace;
   background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse at top, #2a1f17 0%, transparent 60%),
-    radial-gradient(ellipse at bottom, #1a1410 0%, transparent 60%);
+  /* Красивый градиент и сетка на фоне */
+  background-image: 
+    linear-gradient(rgba(13, 12, 29, 0.85), rgba(13, 12, 29, 0.95)),
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(168, 85, 247, 0.15) 39px, rgba(168, 85, 247, 0.15) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(168, 85, 247, 0.15) 39px, rgba(168, 85, 247, 0.15) 40px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-position: center, center, center;
   color: var(--ink);
   line-height: 1.55;
   padding-bottom: 40px;
   position: relative;
 }
 
+/* CRT-сканлайны */
 body::before {
   content: "";
   position: fixed;
@@ -48,13 +53,15 @@ body::before {
   background: repeating-linear-gradient(to bottom, var(--scan) 0px, var(--scan) 1px, transparent 1px, transparent 3px);
   mix-blend-mode: multiply;
 }
+
+/* Виньетка + легкое свечение */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9998;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%);
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
 }
 
 /* ==== HEADER ==== */
@@ -65,7 +72,7 @@ body::after {
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.5), 0 0 30px rgba(255, 182, 193, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -147,12 +154,11 @@ body::after {
 .summary-card:nth-child(2) { transform: rotate(0.5deg); }
 .summary-card:nth-child(3) { transform: rotate(-0.4deg); }
 .summary-card:nth-child(4) { transform: rotate(0.7deg); }
-.summary-card:nth-child(5) { transform: rotate(-0.5deg); }
 .summary-card:nth-child(1)::before { background: var(--orange); }
 .summary-card:nth-child(2)::before { background: var(--amber); }
 .summary-card:nth-child(3)::before { background: var(--teal); }
 .summary-card:nth-child(4)::before { background: var(--green); }
-.summary-card:nth-child(5)::before { background: var(--purple); }
+
 .summary-card:hover {
   transform: translate(-3px, -3px) rotate(0deg);
   box-shadow: 9px 9px 0 var(--ink);
@@ -261,7 +267,6 @@ body::after {
   overflow: hidden;
   position: relative;
 }
-
 .gantt-chart-controls {
   display: flex;
   align-items: center;
@@ -271,7 +276,6 @@ body::after {
   background: var(--paper);
   border-bottom: 3px solid var(--ink);
 }
-
 .gantt-chart-nav {
   font-family: "Press Start 2P", monospace;
   font-size: 0.9rem;
@@ -300,7 +304,6 @@ body::after {
   transform: none;
   box-shadow: 3px 3px 0 var(--ink);
 }
-
 .gantt-chart-dots {
   display: flex;
   gap: 10px;
@@ -322,7 +325,6 @@ body::after {
 .gantt-chart-dot:hover:not(.active) {
   background: var(--amber);
 }
-
 .gantt-chart-slider {
   display: flex;
   overflow-x: auto;
@@ -330,24 +332,15 @@ body::after {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
-.gantt-chart-slider::-webkit-scrollbar {
-  height: 10px;
-}
-.gantt-chart-slider::-webkit-scrollbar-track {
-  background: var(--paper);
-}
-.gantt-chart-slider::-webkit-scrollbar-thumb {
-  background: var(--ink);
-  border: 2px solid var(--paper);
-}
-
+.gantt-chart-slider::-webkit-scrollbar { height: 10px; }
+.gantt-chart-slider::-webkit-scrollbar-track { background: var(--paper); }
+.gantt-chart-slider::-webkit-scrollbar-thumb { background: var(--ink); border: 2px solid var(--paper); }
 .gantt-chart-slide {
   flex: 0 0 100%;
   scroll-snap-align: start;
   padding: 20px;
   min-width: 100%;
 }
-
 .gantt-chart-title {
   font-family: "Press Start 2P", monospace;
   font-size: 0.7rem;
@@ -361,9 +354,7 @@ body::after {
   border: 3px solid var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
 }
-
 .gantt-chart-inner { min-width: 720px; }
-
 .gantt-scale {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -388,10 +379,7 @@ body::after {
   letter-spacing: 0.5px;
   color: var(--ink);
 }
-.gantt-scale-ticks span {
-  position: relative;
-  padding-top: 2px;
-}
+.gantt-scale-ticks span { position: relative; padding-top: 2px; }
 .gantt-scale-ticks span::before {
   content: "";
   position: absolute;
@@ -402,7 +390,6 @@ body::after {
   background: var(--ink);
   transform: translateX(-50%);
 }
-
 .gantt-chart-row {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -412,7 +399,6 @@ body::after {
   border-bottom: 2px dashed rgba(43,29,14,0.25);
 }
 .gantt-chart-row:last-child { border-bottom: none; }
-
 .gantt-chart-row-label {
   font-family: "Press Start 2P", monospace;
   font-size: 0.55rem;
@@ -432,23 +418,15 @@ body::after {
   color: var(--orange);
   font-weight: 700;
 }
-
 .gantt-chart-row-track {
   position: relative;
   height: 30px;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0,
-    transparent calc(100% / 20 - 1px),
-    rgba(43,29,14,0.08) calc(100% / 20 - 1px),
-    rgba(43,29,14,0.08) calc(100% / 20)
-  );
+  background: repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 20 - 1px), rgba(43,29,14,0.08) calc(100% / 20 - 1px), rgba(43,29,14,0.08) calc(100% / 20));
   border: 3px solid var(--ink);
   background-color: var(--paper);
   box-shadow: 3px 3px 0 var(--ink);
   overflow: hidden;
 }
-
 .gantt-chart-bar {
   position: absolute;
   top: 4px;
@@ -470,7 +448,6 @@ body::after {
 .gantt-chart-bar.parallel { background: var(--teal); }
 .gantt-chart-bar.optional { background: var(--amber); }
 .gantt-chart-bar.effort  { background: var(--purple); }
-
 .gantt-chart-bar.parallel::after {
   content: "";
   position: absolute;
@@ -485,7 +462,6 @@ body::after {
   background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 2px, transparent 2px 8px);
   pointer-events: none;
 }
-
 .gantt-chart-bar-label {
   font-family: "VT323", monospace;
   font-size: 0.95rem;
@@ -497,7 +473,6 @@ body::after {
   z-index: 1;
   padding: 0 6px;
 }
-
 .gantt-chart-total {
   margin-top: 12px;
   padding-top: 12px;
