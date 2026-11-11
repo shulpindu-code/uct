@@ -17,8 +17,28 @@
   <!-- Сводная информация -->
   <section class="summary" id="summary"></section>
 
-  <!-- ДИАГРАММА ГАНТА (перед фильтрами) -->
-  <section class="gantt-chart" id="ganttChart"></section>
+  <!-- ДИАГРАММЫ ГАНТА (перед фильтрами) -->
+  <section class="gantt-chart-wrapper">
+    <div class="gantt-chart-controls">
+      <button class="gantt-chart-nav" id="chartPrev" aria-label="Предыдущая диаграмма">◀</button>
+      <div class="gantt-chart-dots" id="chartDots"></div>
+      <button class="gantt-chart-nav" id="chartNext" aria-label="Следующая диаграмма">▶</button>
+    </div>
+
+    <div class="gantt-chart-slider" id="chartSlider">
+      <!-- Слайд 1: обзор (критический путь) -->
+      <div class="gantt-chart-slide">
+        <div class="gantt-chart-title">Диаграмма Ганта — обзор</div>
+        <div class="gantt-chart-inner" id="ganttChartOverview"></div>
+      </div>
+
+      <!-- Слайд 2: объём трудозатрат -->
+      <div class="gantt-chart-slide">
+        <div class="gantt-chart-title">Диаграмма Ганта — объём трудозатрат</div>
+        <div class="gantt-chart-inner" id="ganttChartEffort"></div>
+      </div>
+    </div>
+  </section>
 
   <!-- Фильтры -->
   <section class="filters">
@@ -55,8 +75,8 @@
     </div>
     <p class="note">
       Данные взяты из вкладки «Общая схема (ЗНИ ПБиОТ)», колонка H «Длительность (недели)».
-      Длительность этапа = сумма последовательных обязательных шагов + максимум из параллельных.
-      Итоговая длительность = сумма длительностей всех этапов.
+      Диаграмма «Обзор» учитывает параллельность: длительность этапа = сумма только последовательных обязательных шагов.
+      Диаграмма «Объём трудозатрат» суммирует все обязательные шаги этапа без учёта параллельности.
     </p>
   </section>
 
