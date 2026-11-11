@@ -241,7 +241,7 @@ function showTooltip(target, data) {
     <span>Длительность (H): <b>${fmt(data.duration)} нед.</b></span>
     <span>Оптимизированная (M): <b>${data.optDuration != null ? fmt(data.optDuration) : "— (берётся из H)"} нед.</b></span>
     <span>Важность: ${escapeHtml(data.importance || "—")}</b></span>
-    <span>Параллельно: ${data.parallel ? "да" : "нет"}</span>
+    <span>Параллельно: ${data.parallel ? "да" : "нет"}</b></span>
   </div>`);
 
   if (data.speedup && data.speedup.trim()) {
