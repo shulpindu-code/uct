@@ -240,7 +240,7 @@ function showTooltip(target, data) {
     <span>Этап: ${escapeHtml(data.stage)}</span>
     <span>Длительность (H): <b>${fmt(data.duration)} нед.</b></span>
     <span>Оптимизированная (M): <b>${data.optDuration != null ? fmt(data.optDuration) : "— (берётся из H)"} нед.</b></span>
-    <span>Важность: ${escapeHtml(data.importance || "—")}</span>
+    <span>Важность: ${escapeHtml(data.importance || "—")}</b></span>
     <span>Параллельно: ${data.parallel ? "да" : "нет"}</span>
   </div>`);
 
