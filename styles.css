@@ -699,9 +699,6 @@ body::after {
   margin-left: 2px;
   opacity: 0.85;
 }
-.step-row.not-mandatory { opacity: 0.55; }
-.step-row.not-mandatory:hover { opacity: 0.85; }
-.step-row.not-mandatory .bar { filter: grayscale(0.4); }
 
 /* ==== LEGEND ==== */
 .legend {
