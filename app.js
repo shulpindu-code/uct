@@ -1,9 +1,4 @@
 // Данные из вкладки «Общая схема (ЗНИ ПБиОТ)»
-// stage — этап, name — шаг,
-// duration — колонка H «Длительность (недели)»,
-// optDuration — колонка M «Оцениваемая оптимизированная длительность» (может быть null),
-// importance — важность, parallel — колонка J ("Да" → true),
-// speedup — колонка K «Как можно ускорить/автоматизировать»
 const RAW_DATA = [
   // Подготовительный
   { stage: "Подготовительный", name: "Построить/Скорректировать Vision продукта", duration: 3.0, optDuration: 0.0, importance: "Опциональный", parallel: true,
@@ -64,7 +59,6 @@ const RAW_DATA = [
     speedup: null },
 ];
 
-// Порядок этапов
 const STAGE_ORDER = [
   "Подготовительный",
   "Проработка аналитики",
@@ -75,17 +69,16 @@ const STAGE_ORDER = [
   "Внедрение",
 ];
 
-// Состояние
 const state = {
   showOptional: true,
-  viewMode: "step",   // "step" | "stage"
-  sortMode: "stage",  // "stage" | "duration" | "importance"
+  viewMode: "step",
+  sortMode: "stage",
   collapsed: new Set(),
+  currentChartSlide: 0,
 };
 
 const fmt = (n) => (n == null ? "—" : n.toFixed(1).replace(/\.0$/, ""));
 
-// Длительность шага для режима "base" (H) или "optimized" (M → fallback H)
 function stepDuration(step, mode) {
   if (mode === "optimized") {
     if (step.optDuration != null) return step.optDuration;
@@ -94,16 +87,11 @@ function stepDuration(step, mode) {
   return step.duration;
 }
 
-// Обязательный ли шаг (строго "Обязательный")
 function isMandatory(step) {
   return step.importance === "Обязательный";
 }
 
-// === Расчёт длительности этапа для заданного режима ===
-// Учитываются ТОЛЬКО обязательные шаги. Параллельность учитывается среди них:
-//  - есть параллельные + последовательные → сумма последовательных обязательных
-//  - все обязательные параллельные → максимум из них
-//  - все обязательные последовательные → сумма всех обязательных
+// === Логика расчёта: Критический путь (Обзор) ===
 function stageDuration(steps, mode = "base") {
   const valid = steps
     .filter(isMandatory)
@@ -121,41 +109,41 @@ function stageDuration(steps, mode = "base") {
   return sequential.reduce((a, s) => a + s._d, 0);
 }
 
-function computeStageTotals(mode = "base") {
-  const map = new Map();
-  for (const r of RAW_DATA) {
-    if (!isMandatory(r)) continue;
-    if (stepDuration(r, mode) == null) continue;
-    if (!map.has(r.stage)) map.set(r.stage, []);
-    map.get(r.stage).push(r);
-  }
-  const totals = [];
-  for (const [stage, steps] of map.entries()) {
-    totals.push({ stage, steps: steps.length, duration: stageDuration(steps, mode) });
-  }
-  totals.sort((a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage));
-  return totals;
+// === Логика расчёта: Объём трудозатрат (Простая сумма) ===
+function stageDurationEffort(steps, mode = "base") {
+  const valid = steps
+    .filter(isMandatory)
+    .map(s => ({ ...s, _d: stepDuration(s, mode) }))
+    .filter(s => s._d != null);
+
+  return valid.reduce((a, s) => a + s._d, 0);
 }
 
 // === Сводка ===
 function computeSummary() {
-  const baseTotals = computeStageTotals("base");
-  const optTotals  = computeStageTotals("optimized");
+  const map = new Map();
+  for (const r of RAW_DATA) {
+    if (r.duration == null) continue;
+    if (!map.has(r.stage)) map.set(r.stage, []);
+    map.get(r.stage).push(r);
+  }
 
-  const totalBase = baseTotals.reduce((a, s) => a + s.duration, 0);
-  const totalOpt  = optTotals.reduce((a, s) => a + s.duration, 0);
+  let totalBase = 0;
+  let totalOpt = 0;
+  for (const [stage, steps] of map.entries()) {
+    totalBase += stageDuration(steps, "base");
+    totalOpt += stageDuration(steps, "optimized");
+  }
 
   const mandatory = RAW_DATA.filter(r => isMandatory(r) && r.duration != null);
-  const mandatoryCount = mandatory.length;
-  const parallelMandatory = mandatory.filter(r => r.parallel).length;
-
+  
   return {
     totalByStages: totalBase,
     totalOptByStages: totalOpt,
-    mandatoryCount,
-    parallelMandatory,
+    mandatoryCount: mandatory.length,
+    parallelMandatory: mandatory.filter(r => r.parallel).length,
     count: RAW_DATA.filter(r => r.duration != null).length,
-    stages: baseTotals.length,
+    stages: map.size,
   };
 }
 
@@ -171,7 +159,7 @@ function renderSummary() {
       <div class="value">${fmt(s.totalByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
-      <div class="label">Суммарная длительность(опт.)</div>
+      <div class="label">Суммарная длительность (опт)</div>
       <div class="value">${fmt(s.totalOptByStages)} <small>нед.</small></div>
     </div>
     <div class="summary-card">
@@ -189,7 +177,7 @@ function renderSummary() {
   `;
 }
 
-// === Фильтрация / сортировка ===
+// === Фильтрация / сортировка (для списка этапов) ===
 function getProcessed() {
   let rows = RAW_DATA.filter(r => r.duration != null);
   if (!state.showOptional) rows = rows.filter(r => r.importance !== "Опциональный");
@@ -213,17 +201,15 @@ function sortedStages(stages) {
       const db = stageDuration(RAW_DATA.filter(r => r.stage === b), "base");
       return db - da;
     });
-    return arr;
-  }
-  if (state.sortMode === "importance") {
+  } else if (state.sortMode === "importance") {
     const rank = (s) => {
       const steps = RAW_DATA.filter(r => r.stage === s && isMandatory(r) && r.duration != null);
       return steps.length ? 0 : 1;
     };
     arr.sort((a, b) => rank(a) - rank(b));
-    return arr;
+  } else {
+    arr.sort((a, b) => STAGE_ORDER.indexOf(a) - STAGE_ORDER.indexOf(b));
   }
-  arr.sort((a, b) => STAGE_ORDER.indexOf(a) - STAGE_ORDER.indexOf(b));
   return arr;
 }
 
@@ -239,7 +225,6 @@ function sortSteps(steps) {
 
 // === Тултип ===
 let tooltipEl = null;
-
 function ensureTooltip() {
   if (tooltipEl) return tooltipEl;
   tooltipEl = document.createElement("div");
@@ -248,18 +233,11 @@ function ensureTooltip() {
   document.body.appendChild(tooltipEl);
   return tooltipEl;
 }
-
 function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-
 function showTooltip(target, data) {
   const el = ensureTooltip();
-
   const parts = [];
   parts.push(`<div class="tooltip-title">${escapeHtml(data.name)}</div>`);
   parts.push(`<div class="tooltip-meta">
@@ -282,42 +260,32 @@ function showTooltip(target, data) {
       <div class="tooltip-text">Для этого шага предложений по ускорению в исходной таблице нет.</div>
     </div>`);
   }
-
   el.innerHTML = parts.join("");
   el.classList.add("visible");
   positionTooltip(target);
 }
-
 function positionTooltip(target) {
   const el = tooltipEl;
   if (!el) return;
   const rect = target.getBoundingClientRect();
   const tooltipRect = el.getBoundingClientRect();
   const gap = 12;
-
   let top = rect.bottom + gap + window.scrollY;
   let left = rect.left + window.scrollX;
-
-  if (left + tooltipRect.width > window.innerWidth - 12) {
-    left = window.innerWidth - tooltipRect.width - 12 + window.scrollX;
-  }
+  if (left + tooltipRect.width > window.innerWidth - 12) left = window.innerWidth - tooltipRect.width - 12 + window.scrollX;
   if (left < 12) left = 12 + window.scrollX;
-
   if (rect.bottom + gap + tooltipRect.height > window.innerHeight) {
     top = rect.top - tooltipRect.height - gap + window.scrollY;
     el.classList.add("above");
   } else {
     el.classList.remove("above");
   }
-
   el.style.top = top + "px";
   el.style.left = left + "px";
 }
-
 function hideTooltip() {
   if (tooltipEl) tooltipEl.classList.remove("visible");
 }
-
 function attachTooltip(rowEl, data) {
   rowEl.addEventListener("mouseenter", () => showTooltip(rowEl, data));
   rowEl.addEventListener("mouseleave", hideTooltip);
@@ -327,16 +295,11 @@ function attachTooltip(rowEl, data) {
     if (e.touches.length === 1) showTooltip(rowEl, data);
   }, { passive: true });
 }
-
 window.addEventListener("scroll", () => { if (tooltipEl) hideTooltip(); }, { passive: true });
 window.addEventListener("resize", () => { if (tooltipEl) hideTooltip(); });
 
-// === Рендер диаграммы Ганта (временная шкала) перед фильтрами ===
-function renderGanttChart() {
-  const el = document.getElementById("ganttChart");
-  if (!el) return;
-
-  // Обзорная диаграмма — все этапы в исходном порядке, независимо от фильтров.
+// === ДИАГРАММЫ ГАНТА (карусель) ===
+function renderGanttCharts() {
   const map = new Map();
   for (const r of RAW_DATA) {
     if (r.duration == null) continue;
@@ -345,42 +308,51 @@ function renderGanttChart() {
   }
   const stages = STAGE_ORDER.filter(s => map.has(s));
 
-  const rows = stages.map(stage => {
+  // 1. Данные для Обзора
+  const overviewRows = stages.map(stage => {
     const steps = map.get(stage);
-    const durBase = stageDuration(steps, "base");
-    const durOpt  = stageDuration(steps, "optimized");
-    const mandatory = steps.filter(isMandatory);
-    const hasParallelMandatory = mandatory.some(s => s.parallel);
-    const hasOnlyOptional = mandatory.length === 0;
-    return { stage, steps, durBase, durOpt, hasParallelMandatory, hasOnlyOptional };
+    return {
+      stage,
+      steps,
+      durBase: stageDuration(steps, "base"),
+      durOpt: stageDuration(steps, "optimized"),
+      hasParallel: steps.filter(isMandatory).some(s => s.parallel),
+      hasOnlyOptional: !steps.some(isMandatory)
+    };
   });
 
-  const total = rows.reduce((a, r) => a + r.durBase, 0) || 1;
-
-  let cumulative = 0;
-  const bars = rows.map(r => {
-    const leftPct = (cumulative / total) * 100;
-    const widthPct = (r.durBase / total) * 100;
-    cumulative += r.durBase;
-    return { ...r, leftPct, widthPct };
+  // 2. Данные для Объема трудозатрат
+  const effortRows = stages.map(stage => {
+    const steps = map.get(stage);
+    return {
+      stage,
+      steps,
+      durBase: stageDurationEffort(steps, "base"),
+      durOpt: stageDurationEffort(steps, "optimized")
+    };
   });
 
-  const tickCount = 10;
-  const ticks = [];
-  for (let i = 0; i <= tickCount; i++) {
-    ticks.push((total / tickCount * i).toFixed(1).replace(/\.0$/, ""));
-  }
+  const buildChartHTML = (rows, totalBase, totalOpt, isEffort) => {
+    const totalSafe = totalBase || 1;
+    let cumulative = 0;
+    
+    const bars = rows.map(r => {
+      const leftPct = (cumulative / totalSafe) * 100;
+      const widthPct = (r.durBase / totalSafe) * 100;
+      cumulative += r.durBase;
+      return { ...r, leftPct, widthPct };
+    });
 
-  const totalOpt = rows.reduce((a, r) => a + r.durOpt, 0);
+    const tickCount = 10;
+    const ticks = [];
+    for (let i = 0; i <= tickCount; i++) {
+      ticks.push((totalBase / tickCount * i).toFixed(1).replace(/\.0$/, ""));
+    }
 
-  el.innerHTML = `
-    <div class="gantt-chart-title">Диаграмма Ганта — обзор</div>
-    <div class="gantt-chart-inner">
+    return `
       <div class="gantt-scale">
         <div class="gantt-scale-label">Этап / недели</div>
-        <div class="gantt-scale-ticks">
-          ${ticks.map(t => `<span>${t}</span>`).join("")}
-        </div>
+        <div class="gantt-scale-ticks">${ticks.map(t => `<span>${t}</span>`).join("")}</div>
       </div>
       ${bars.map(b => `
         <div class="gantt-chart-row">
@@ -389,11 +361,9 @@ function renderGanttChart() {
             <small>${fmt(b.durBase)} нед.${Math.abs(b.durBase - b.durOpt) > 0.001 ? ` → ${fmt(b.durOpt)} (опт.)` : ""}</small>
           </div>
           <div class="gantt-chart-row-track">
-            <div
-              class="gantt-chart-bar ${b.hasParallelMandatory ? "parallel" : ""} ${b.hasOnlyOptional ? "optional" : ""}"
-              style="left:${b.leftPct}%; width:${Math.max(b.widthPct, 0.5)}%;"
-              title="${b.stage}: ${fmt(b.durBase)} нед."
-            >
+            <div class="gantt-chart-bar ${isEffort ? 'effort' : (b.hasParallel ? 'parallel' : '')} ${b.hasOnlyOptional ? 'optional' : ''}" 
+                 style="left:${b.leftPct}%; width:${Math.max(b.widthPct, 0.5)}%;"
+                 title="${b.stage}: ${fmt(b.durBase)} нед.">
               ${b.widthPct > 6 ? `<span class="gantt-chart-bar-label">${fmt(b.durBase)}</span>` : ""}
             </div>
           </div>
@@ -401,13 +371,77 @@ function renderGanttChart() {
       `).join("")}
       <div class="gantt-chart-total">
         <span>Итого по всем этапам</span>
-        <span class="gantt-chart-total-value">${fmt(total)} нед.${Math.abs(total - totalOpt) > 0.001 ? ` (опт. ${fmt(totalOpt)})` : ""}</span>
+        <span class="gantt-chart-total-value">${fmt(totalBase)} нед.${Math.abs(totalBase - totalOpt) > 0.001 ? ` (опт. ${fmt(totalOpt)})` : ""}</span>
       </div>
-    </div>
-  `;
+    `;
+  };
+
+  const sumOverviewBase = overviewRows.reduce((a, r) => a + r.durBase, 0);
+  const sumOverviewOpt = overviewRows.reduce((a, r) => a + r.durOpt, 0);
+  const sumEffortBase = effortRows.reduce((a, r) => a + r.durBase, 0);
+  const sumEffortOpt = effortRows.reduce((a, r) => a + r.durOpt, 0);
+
+  document.getElementById("ganttChartOverview").innerHTML = buildChartHTML(overviewRows, sumOverviewBase, sumOverviewOpt, false);
+  document.getElementById("ganttChartEffort").innerHTML = buildChartHTML(effortRows, sumEffortBase, sumEffortOpt, true);
+
+  initCarousel();
 }
 
-// === Рендер списка этапов с полосами ===
+function initCarousel() {
+  const slider = document.getElementById("chartSlider");
+  const prevBtn = document.getElementById("chartPrev");
+  const nextBtn = document.getElementById("chartNext");
+  const dotsContainer = document.getElementById("chartDots");
+  if (!slider || !dotsContainer) return;
+
+  const slides = slider.querySelectorAll(".gantt-chart-slide");
+  dotsContainer.innerHTML = "";
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement("button");
+    dot.className = "gantt-chart-dot" + (i === state.currentChartSlide ? " active" : "");
+    dot.setAttribute("aria-label", `Слайд ${i + 1}`);
+    dot.addEventListener("click", () => {
+      slider.scrollTo({ left: slider.clientWidth * i, behavior: "smooth" });
+    });
+    dotsContainer.appendChild(dot);
+  });
+
+  const updateNav = () => {
+    // Вычисляем текущий слайд на основе скролла
+    const slideWidth = slider.clientWidth;
+    if (slideWidth === 0) return;
+    const index = Math.round(slider.scrollLeft / slideWidth);
+    
+    state.currentChartSlide = index;
+    
+    dotsContainer.querySelectorAll(".gantt-chart-dot").forEach((dot, i) => {
+      dot.classList.toggle("active", i === index);
+    });
+    
+    if (prevBtn) prevBtn.disabled = index === 0;
+    if (nextBtn) nextBtn.disabled = index === slides.length - 1;
+  };
+
+  slider.addEventListener("scroll", updateNav, { passive: true });
+  
+  if (prevBtn) {
+    prevBtn.onclick = () => {
+      const index = Math.max(0, state.currentChartSlide - 1);
+      slider.scrollTo({ left: slider.clientWidth * index, behavior: "smooth" });
+    };
+  }
+  if (nextBtn) {
+    nextBtn.onclick = () => {
+      const index = Math.min(slides.length - 1, state.currentChartSlide + 1);
+      slider.scrollTo({ left: slider.clientWidth * index, behavior: "smooth" });
+    };
+  }
+
+  setTimeout(updateNav, 100);
+}
+
+// === СПИСОК ЭТАПОВ ===
 function renderGantt() {
   const el = document.getElementById("gantt");
   el.innerHTML = "";
@@ -415,19 +449,15 @@ function renderGantt() {
 
   const rows = getProcessed();
   if (!rows.length) {
-    el.innerHTML = `<div class="stage-block"><div class="stage-body" style="padding:20px;color:#64748b">Нет шагов для отображения с текущими фильтрами.</div></div>`;
+    el.innerHTML = `<div class="stage-block"><div class="stage-body" style="padding:20px;color:#64748b">Нет шагов для отображения.</div></div>`;
     return;
   }
 
   const map = groupByStage(rows);
   const stages = sortedStages(map.keys());
-
-  let maxScale;
-  if (state.viewMode === "stage") {
-    maxScale = Math.max(...stages.map(s => stageDuration(map.get(s), "base")), 0.1);
-  } else {
-    maxScale = Math.max(...rows.map(r => r.duration ?? 0), 0.1);
-  }
+  const maxScale = state.viewMode === "stage" 
+    ? Math.max(...stages.map(s => stageDuration(map.get(s), "base")), 0.1)
+    : Math.max(...rows.map(r => r.duration ?? 0), 0.1);
 
   if (state.viewMode === "stage") {
     el.innerHTML = stages.map(stage => {
@@ -436,7 +466,6 @@ function renderGantt() {
       const durOpt  = stageDuration(steps, "optimized");
       const mandatory = steps.filter(isMandatory);
       const hasParallelMandatory = mandatory.some(s => s.parallel);
-      const barClass = hasParallelMandatory ? "parallel" : "";
       const pct = (durBase / maxScale) * 100;
       const pctOpt = (durOpt / maxScale) * 100;
       const hasOptDiff = Math.abs(durBase - durOpt) > 0.001;
@@ -450,7 +479,7 @@ function renderGantt() {
           <div class="stage-body">
             <div class="step-row" style="grid-template-columns:1fr 90px">
               <div class="bar-container" style="height:28px">
-                <div class="bar ${barClass}" style="width:${pct}%">
+                <div class="bar ${hasParallelMandatory ? "parallel" : ""}" style="width:${pct}%">
                   ${pct > 12 ? `<span class="bar-label">${fmt(durBase)}</span>` : ""}
                 </div>
               </div>
@@ -465,12 +494,6 @@ function renderGantt() {
               </div>
               <div class="step-duration">${fmt(durOpt)} <small>нед. (опт.)</small></div>
             </div>` : ""}
-            <div class="step-row" style="grid-template-columns:1fr; border-bottom:none; padding-top:0">
-              <div class="note" style="font-size:0.9rem; border-left-color:#ff6b35">
-                Учитываются только обязательные шаги${hasParallelMandatory ? " (параллельные учтены внутри)" : ""}.
-                <b>H = ${fmt(durBase)} нед.</b>${hasOptDiff ? `, <b>M = ${fmt(durOpt)} нед.</b>` : ""}
-              </div>
-            </div>
           </div>
         </div>
       `;
@@ -481,7 +504,6 @@ function renderGantt() {
   for (const stage of stages) {
     const steps = sortSteps(map.get(stage));
     const durBase = stageDuration(steps, "base");
-    const durOpt  = stageDuration(steps, "optimized");
     const collapsed = state.collapsed.has(stage);
     const mandatorySteps = steps.filter(isMandatory);
 
@@ -533,33 +555,6 @@ function renderGantt() {
       attachTooltip(row, r);
       body.appendChild(row);
     }
-
-    const hasParallelMandatory = mandatorySteps.some(s => s.parallel);
-    const seqBase = mandatorySteps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
-    const parBase = mandatorySteps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "base"), 0);
-    const seqOpt  = mandatorySteps.filter(s => !s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
-    const parOpt  = mandatorySteps.filter(s =>  s.parallel).reduce((a, s) => a + stepDuration(s, "optimized"), 0);
-    const footer = document.createElement("div");
-    footer.className = "step-row";
-    footer.style.gridTemplateColumns = "1fr";
-    footer.style.background = "#e8d5a8";
-    footer.innerHTML = `
-      <div class="note" style="border-left-color:#ff6b35; font-size:0.95rem">
-        <b>Учитываются только обязательные шаги (${mandatorySteps.length} из ${steps.length}).</b>
-        <br>
-        <b>Длительность этапа (H):</b> ${fmt(durBase)} нед. —
-        ${hasParallelMandatory
-          ? `только последовательные обязательные (${fmt(seqBase)} нед.); параллельные обязательные (${fmt(parBase)} нед.) учтены внутри`
-          : `сумма обязательных (${fmt(seqBase)} нед.)`}
-        <br>
-        <b>Оптимизированная (M):</b> ${fmt(durOpt)} нед. —
-        ${hasParallelMandatory
-          ? `только последовательные обязательные (${fmt(seqOpt)} нед.); параллельные обязательные (${fmt(parOpt)} нед.) учтены внутри`
-          : `сумма обязательных (${fmt(seqOpt)} нед.)`}
-      </div>
-    `;
-    body.appendChild(footer);
-
     block.appendChild(body);
     el.appendChild(block);
   }
@@ -568,12 +563,11 @@ function renderGantt() {
 // === Инициализация ===
 function init() {
   renderSummary();
-  renderGanttChart();
+  renderGanttCharts();
   renderGantt();
 
   document.getElementById("filterOptional").addEventListener("change", (e) => {
     state.showOptional = e.target.checked;
-    renderSummary();
     renderGantt();
   });
 
