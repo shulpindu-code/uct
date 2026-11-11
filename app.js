@@ -527,7 +527,6 @@ function renderGantt() {
       row.className = "step-row";
       row.tabIndex = 0;
       if (r.speedup && r.speedup.trim()) row.classList.add("has-speedup");
-      if (!isMandatory(r)) row.classList.add("not-mandatory");
 
       const badgeClass = r.importance === "Опциональный" ? "опциональный" : "обязательный";
       const barClass = r.parallel ? "parallel" : (r.importance === "Опциональный" ? "опциональный" : "");
