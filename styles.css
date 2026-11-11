@@ -120,7 +120,7 @@ body::after {
 /* ==== SUMMARY ==== */
 .summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-bottom: 36px;
 }
@@ -131,6 +131,9 @@ body::after {
   padding: 18px 18px 16px;
   position: relative;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .summary-card::before {
   content: "";
@@ -156,12 +159,17 @@ body::after {
 }
 .summary-card .label {
   font-family: "VT323", monospace;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--ink);
   opacity: 0.85;
   margin-top: 4px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.2;
+  hyphens: auto;
 }
 .summary-card .value {
   font-family: "Press Start 2P", monospace;
@@ -821,4 +829,100 @@ body::after {
   padding: 14px 16px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.82rem;
-  line
+  line-height: 1.5;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.tooltip::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  width: 14px;
+  height: 14px;
+  background: var(--cream);
+  border-left: 3px solid var(--ink);
+  border-top: 3px solid var(--ink);
+  transform: rotate(45deg);
+}
+.tooltip.above::before {
+  top: auto;
+  bottom: -10px;
+  border-left: none;
+  border-top: none;
+  border-right: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+}
+.tooltip-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.6rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed rgba(43,29,14,0.4);
+  color: var(--ink);
+}
+.tooltip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-family: "VT323", monospace;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.tooltip-meta span { white-space: nowrap; }
+.tooltip-meta b { color: var(--orange); }
+.tooltip-section { margin-top: 6px; }
+.tooltip-section-title {
+  font-family: "VT323", monospace;
+  font-size: 1.05rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 4px;
+}
+.tooltip-text {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
+  border-left: 4px solid var(--orange);
+  padding: 8px 10px;
+}
+.tooltip-empty .tooltip-text {
+  color: #6b5a44;
+  font-style: italic;
+  border-left-color: #b8a888;
+}
+
+/* ==== АДАПТИВ ==== */
+@media (max-width: 700px) {
+  .step-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 16px;
+  }
+  .step-duration { text-align: left; width: max-content; }
+  .stage-header { flex-wrap: wrap; }
+  .header { padding: 28px 16px 26px; }
+  .header h1 { font-size: 0.85rem; }
+  .summary-card .value { font-size: 1.1rem; }
+  .stage-title { font-size: 0.6rem; }
+  .tooltip { max-width: calc(100vw - 32px); min-width: 0; }
+  .gantt-chart-row,
+  .gantt-scale {
+    grid-template-columns: 1fr;
+  }
+  .gantt-chart-row-label { font-size: 0.5rem; }
+  .gantt-chart-inner { min-width: 0; }
+}
