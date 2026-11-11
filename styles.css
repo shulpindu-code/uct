@@ -1,24 +1,23 @@
 /* ============================================================
    RETRO / 80s / VHS / ARCADE
-   Тёплая палитра, моноширинные шрифты, сканлайны, пиксельные акценты
-   + TOOLTIP «Как можно ускорить / автоматизировать»
-   + ДИАГРАММА ГАНТА (перед фильтрами)
+   + TOOLTIP
+   + ДИАГРАММЫ ГАНТА (обзор и объём трудозатрат) — в карусели
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap');
 
 :root {
-  --bg:        #1a1410;   /* тёмный «ламповый» фон */
-  --paper:     #f4e4c1;   /* бежевая бумага */
-  --paper-2:   #e8d5a8;   /* бумага темнее */
-  --cream:     #fdf6e3;   /* светлая бумага */
-  --ink:       #2b1d0e;   /* тёмно-коричневый «чернила» */
-  --orange:    #ff6b35;   /* ретро-оранжевый */
-  --amber:     #ffb000;   /* янтарный */
-  --teal:      #2a9d8f;   /* бирюзовый */
-  --red:       #d62828;   /* алый */
-  --purple:    #6a4c93;   /* винтажный фиолетовый */
-  --green:     #588157;   /* оливковый */
+  --bg:        #1a1410;
+  --paper:     #f4e4c1;
+  --paper-2:   #e8d5a8;
+  --cream:     #fdf6e3;
+  --ink:       #2b1d0e;
+  --orange:    #ff6b35;
+  --amber:     #ffb000;
+  --teal:      #2a9d8f;
+  --red:       #d62828;
+  --purple:    #6a4c93;
+  --green:     #588157;
   --scan:      rgba(0, 0, 0, 0.06);
   --border:    3px solid var(--ink);
   --shadow:    6px 6px 0 var(--ink);
@@ -26,7 +25,6 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
 
 body {
@@ -41,24 +39,15 @@ body {
   position: relative;
 }
 
-/* CRT-сканлайны поверх всей страницы */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--scan) 0px,
-    var(--scan) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  background: repeating-linear-gradient(to bottom, var(--scan) 0px, var(--scan) 1px, transparent 1px, transparent 3px);
   mix-blend-mode: multiply;
 }
-
-/* Лёгкое виньетирование */
 body::after {
   content: "";
   position: fixed;
@@ -82,21 +71,13 @@ body::after {
   align-items: center;
   gap: 22px;
 }
-
 .header::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 27px,
-    rgba(43,29,14,0.08) 27px,
-    rgba(43,29,14,0.08) 28px
-  );
+  background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 27px, rgba(43,29,14,0.08) 27px, rgba(43,29,14,0.08) 28px);
   pointer-events: none;
 }
-
 .header h1 {
   font-family: "Press Start 2P", monospace;
   font-size: clamp(1rem, 3.2vw, 1.9rem);
@@ -113,7 +94,6 @@ body::after {
   letter-spacing: 1px;
   margin: 0;
 }
-
 .header .subtitle {
   margin: 0;
   display: inline-block;
@@ -129,7 +109,6 @@ body::after {
   z-index: 1;
 }
 
-/* ==== CONTAINER ==== */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -138,7 +117,7 @@ body::after {
   z-index: 2;
 }
 
-/* ==== SUMMARY CARDS ==== */
+/* ==== SUMMARY ==== */
 .summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -171,7 +150,6 @@ body::after {
 .summary-card:nth-child(3)::before { background: var(--teal); }
 .summary-card:nth-child(4)::before { background: var(--green); }
 .summary-card:nth-child(5)::before { background: var(--purple); }
-
 .summary-card:hover {
   transform: translate(-3px, -3px) rotate(0deg);
   box-shadow: 9px 9px 0 var(--ink);
@@ -241,8 +219,6 @@ body::after {
 }
 .filter-group select:focus { outline: 3px solid var(--orange); outline-offset: 2px; }
 .filter-group label { cursor: pointer; }
-
-/* Кастомный чекбокс */
 .filter-group input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -259,9 +235,7 @@ body::after {
   transform: translate(-2px, -2px);
   box-shadow: 5px 5px 0 var(--ink);
 }
-.filter-group input[type="checkbox"]:checked {
-  background: var(--teal);
-}
+.filter-group input[type="checkbox"]:checked { background: var(--teal); }
 .filter-group input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
@@ -270,14 +244,100 @@ body::after {
   clip-path: polygon(14% 44%, 0 58%, 40% 98%, 100% 20%, 84% 8%, 38% 70%);
 }
 
-/* ==== ДИАГРАММА ГАНТА (обзор) ==== */
-.gantt-chart {
+/* ==== ДИАГРАММЫ ГАНТА (карусель) ==== */
+.gantt-chart-wrapper {
   background: var(--cream);
   border: var(--border);
   box-shadow: var(--shadow);
-  padding: 20px 20px 24px;
   margin-bottom: 32px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gantt-chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--paper);
+  border-bottom: 3px solid var(--ink);
+}
+
+.gantt-chart-nav {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.9rem;
+  background: var(--amber);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+  line-height: 1;
+}
+.gantt-chart-nav:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: var(--orange);
+  color: var(--cream);
+}
+.gantt-chart-nav:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.gantt-chart-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.gantt-chart-dots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.gantt-chart-dot {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, transform 0.15s;
+}
+.gantt-chart-dot.active {
+  background: var(--teal);
+  transform: scale(1.15);
+}
+.gantt-chart-dot:hover:not(.active) {
+  background: var(--amber);
+}
+
+.gantt-chart-slider {
+  display: flex;
   overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.gantt-chart-slider::-webkit-scrollbar {
+  height: 10px;
+}
+.gantt-chart-slider::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+.gantt-chart-slider::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  border: 2px solid var(--paper);
+}
+
+.gantt-chart-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  padding: 20px;
+  min-width: 100%;
 }
 
 .gantt-chart-title {
@@ -387,10 +447,8 @@ body::after {
   bottom: 4px;
   background: var(--orange);
   border: 2px solid var(--ink);
-  border-radius: 0;
   box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15);
   transition: filter 0.15s, transform 0.15s;
-  cursor: default;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -403,16 +461,20 @@ body::after {
 }
 .gantt-chart-bar.parallel { background: var(--teal); }
 .gantt-chart-bar.optional { background: var(--amber); }
+.gantt-chart-bar.effort  { background: var(--purple); }
 
 .gantt-chart-bar.parallel::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(0,0,0,0.18) 0 5px,
-    transparent 5px 12px
-  );
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.18) 0 5px, transparent 5px 12px);
+  pointer-events: none;
+}
+.gantt-chart-bar.effort::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 2px, transparent 2px 8px);
   pointer-events: none;
 }
 
@@ -451,9 +513,8 @@ body::after {
   letter-spacing: 1px;
 }
 
-/* ==== СПИСОК ЭТАПОВ С ПОЛОСАМИ ==== */
+/* ==== СПИСОК ЭТАПОВ ==== */
 .gantt { display: flex; flex-direction: column; gap: 28px; }
-
 .stage-block {
   background: var(--cream);
   border: var(--border);
@@ -465,7 +526,6 @@ body::after {
   transform: translate(-2px, -2px);
   box-shadow: 9px 9px 0 var(--ink);
 }
-
 .stage-header {
   display: flex;
   justify-content: space-between;
@@ -485,14 +545,9 @@ body::after {
   position: absolute;
   left: 0; right: 0; bottom: -3px;
   height: 3px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--ink) 0 6px,
-    transparent 6px 12px
-  );
+  background-image: repeating-linear-gradient(90deg, var(--ink) 0 6px, transparent 6px 12px);
 }
 .stage-header:hover { background: var(--red); }
-
 .stage-title {
   font-family: "Press Start 2P", monospace;
   font-size: clamp(0.65rem, 1.5vw, 0.85rem);
@@ -513,7 +568,6 @@ body::after {
   padding: 2px 8px;
   border: 2px solid var(--cream);
 }
-
 .stage-total {
   font-family: "Press Start 2P", monospace;
   font-size: 0.85rem;
@@ -531,11 +585,9 @@ body::after {
   display: inline-block;
   margin-left: 2px;
 }
-
 .stage-body { padding: 0; }
 .stage-block.collapsed .stage-body { display: none; }
 
-/* ==== STEP ROW ==== */
 .step-row {
   display: grid;
   grid-template-columns: minmax(200px, 40%) 1fr 90px;
@@ -549,7 +601,6 @@ body::after {
 }
 .step-row:last-child { border-bottom: none; }
 .step-row:hover { background: var(--paper-2); }
-
 .step-name {
   font-size: 0.82rem;
   font-weight: 600;
@@ -563,7 +614,6 @@ body::after {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .badge {
   font-family: "VT323", monospace;
   font-size: 0.9rem;
@@ -577,8 +627,6 @@ body::after {
 }
 .badge.опциональный { background: var(--amber); color: var(--ink); }
 .badge.обязательный { background: var(--teal);  color: var(--cream); }
-
-/* Полоса */
 .bar-container {
   background: var(--paper);
   border: 3px solid var(--ink);
@@ -598,27 +646,17 @@ body::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(255,255,255,0.18) 0 2px,
-    transparent 2px 8px
-  );
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 8px);
   pointer-events: none;
 }
 .bar.опциональный { background: var(--amber); }
 .bar.parallel     { background: var(--teal); }
-
 .bar.parallel::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(0,0,0,0.18) 0 5px,
-    transparent 5px 12px
-  );
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.18) 0 5px, transparent 5px 12px);
 }
-
 .bar-label {
   position: absolute;
   top: 50%;
@@ -633,7 +671,6 @@ body::after {
   white-space: nowrap;
   text-shadow: 1px 1px 0 var(--ink), 2px 2px 0 var(--ink);
 }
-
 .step-duration {
   font-family: "VT323", monospace;
   font-size: 1.3rem;
@@ -654,8 +691,6 @@ body::after {
   margin-left: 2px;
   opacity: 0.85;
 }
-
-/* Шаги, не участвующие в расчёте */
 .step-row.not-mandatory { opacity: 0.55; }
 .step-row.not-mandatory:hover { opacity: 0.85; }
 .step-row.not-mandatory .bar { filter: grayscale(0.4); }
@@ -712,11 +747,7 @@ body::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(0,0,0,0.28) 0 3px,
-    transparent 3px 7px
-  );
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.28) 0 3px, transparent 3px 7px);
 }
 .note {
   font-family: "VT323", monospace;
@@ -748,7 +779,6 @@ body::after {
 .footer p::before { content: "▸ "; color: var(--orange); }
 .footer p::after  { content: " ◂"; color: var(--orange); }
 
-/* ==== МИГАЮЩИЙ КУРСОР ==== */
 @keyframes blink {
   0%, 49%   { opacity: 1; }
   50%, 100% { opacity: 0; }
@@ -761,10 +791,7 @@ body::after {
   color: var(--amber);
 }
 
-/* ============================================================
-   TOOLTIP — «Как можно ускорить / автоматизировать»
-   ============================================================ */
-
+/* ==== TOOLTIP ==== */
 .speedup-icon {
   font-size: 0.95rem;
   color: var(--amber);
@@ -777,13 +804,11 @@ body::after {
   0%, 100% { transform: scale(1);    opacity: 1;   }
   50%      { transform: scale(1.15); opacity: 0.7; }
 }
-
 .step-row.has-speedup { cursor: help; }
 .step-row.has-speedup .step-name > span:first-child {
   text-decoration: underline dotted rgba(43,29,14,0.5);
   text-underline-offset: 3px;
 }
-
 .tooltip {
   position: absolute;
   z-index: 10000;
@@ -796,103 +821,4 @@ body::after {
   padding: 14px 16px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.82rem;
-  line-height: 1.5;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.tooltip.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.tooltip::before {
-  content: "";
-  position: absolute;
-  top: -10px;
-  left: 20px;
-  width: 14px;
-  height: 14px;
-  background: var(--cream);
-  border-left: 3px solid var(--ink);
-  border-top: 3px solid var(--ink);
-  transform: rotate(45deg);
-}
-.tooltip.above::before {
-  top: auto;
-  bottom: -10px;
-  border-left: none;
-  border-top: none;
-  border-right: 3px solid var(--ink);
-  border-bottom: 3px solid var(--ink);
-}
-
-.tooltip-title {
-  font-family: "Press Start 2P", monospace;
-  font-size: 0.6rem;
-  line-height: 1.5;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 2px dashed rgba(43,29,14,0.4);
-  color: var(--ink);
-}
-
-.tooltip-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  font-family: "VT323", monospace;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-.tooltip-meta span { white-space: nowrap; }
-.tooltip-meta b { color: var(--orange); }
-
-.tooltip-section { margin-top: 6px; }
-.tooltip-section-title {
-  font-family: "VT323", monospace;
-  font-size: 1.05rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--orange);
-  margin-bottom: 4px;
-}
-.tooltip-text {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: var(--ink);
-  background: var(--paper);
-  border-left: 4px solid var(--orange);
-  padding: 8px 10px;
-}
-.tooltip-empty .tooltip-text {
-  color: #6b5a44;
-  font-style: italic;
-  border-left-color: #b8a888;
-}
-
-/* ==== АДАПТИВ ==== */
-@media (max-width: 700px) {
-  .step-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 12px 16px;
-  }
-  .step-duration { text-align: left; width: max-content; }
-  .stage-header { flex-wrap: wrap; }
-  .header { padding: 28px 16px 26px; }
-  .header h1 { font-size: 0.85rem; }
-  .summary-card .value { font-size: 1.1rem; }
-  .stage-title { font-size: 0.6rem; }
-  .tooltip { max-width: calc(100vw - 32px); min-width: 0; }
-  .gantt-chart-row,
-  .gantt-scale {
-    grid-template-columns: 1fr;
-  }
-  .gantt-chart-row-label { font-size: 0.5rem; }
-  .gantt-chart-inner { min-width: 0; }
-}
+  line
