@@ -170,10 +170,6 @@ function renderSummary() {
       <div class="label">Обязательных шагов (из них параллельных)</div>
       <div class="value">${s.mandatoryCount} <small>(${s.parallelMandatory} паралл.)</small></div>
     </div>
-    <div class="summary-card">
-      <div class="label">Этапов / шагов всего</div>
-      <div class="value">${s.stages} / ${s.count}</div>
-    </div>
   `;
 }
 
